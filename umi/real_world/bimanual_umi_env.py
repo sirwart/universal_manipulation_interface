@@ -9,6 +9,7 @@ from umi.real_world.rtde_interpolation_controller import RTDEInterpolationContro
 from umi.real_world.wsg_controller import WSGController
 from umi.real_world.franka_interpolation_controller import FrankaInterpolationController
 from umi.real_world.multi_uvc_camera import MultiUvcCamera, VideoRecorder
+from umi.real_world.viperx_interpolation_controller import ViperXInterpolationController, ViperXGripperController 
 from diffusion_policy.common.timestamp_accumulator import (
     TimestampActionAccumulator,
     ObsAccumulator
@@ -240,20 +241,25 @@ class BimanualUmiEnv:
                     verbose=False,
                     receive_latency=rc['robot_obs_latency']
                 )
+            elif rc['robot_type'] == 'viperx':
+                this_robot = ViperXInterpolationController(shm_manager)
+                gripper = ViperXGripperController(this_robot)
+                grippers.append(gripper)
             else:
                 raise NotImplementedError()
             robots.append(this_robot)
 
-        for gc in grippers_config:
-            this_gripper = WSGController(
-                shm_manager=shm_manager,
-                hostname=gc['gripper_ip'],
-                port=gc['gripper_port'],
-                receive_latency=gc['gripper_obs_latency'],
-                use_meters=True
-            )
+        if len(grippers) == 0:
+            for gc in grippers_config:
+                this_gripper = WSGController(
+                    shm_manager=shm_manager,
+                    hostname=gc['gripper_ip'],
+                    port=gc['gripper_port'],
+                    receive_latency=gc['gripper_obs_latency'],
+                    use_meters=True
+                )
 
-            grippers.append(this_gripper)
+                grippers.append(this_gripper)
 
         self.camera = camera
         
